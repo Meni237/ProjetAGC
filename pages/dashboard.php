@@ -38,7 +38,7 @@
             pointer-events: auto;
         }
         .nav-link.active {
-            background-color: #2563eb;
+            background-color: #2563eb; /* Blue */
         }
     </style>
 </head>
@@ -61,37 +61,37 @@
     ?>
     <div class="flex flex-col h-screen">
         <!-- Navbar -->
-        <header class="flex items-center justify-between p-4 text-white bg-black shadow-md">
+        <header class="bg-black text-white p-4 flex justify-between items-center shadow-md">
             <h1 class="text-2xl font-bold text-blue-400">AGC Archiv' Secure</h1>
             <div class="relative">
-                <button id="profileBtn" class="flex items-center p-2 space-x-2 rounded hover:bg-blue-700">
+                <button id="profileBtn" class="flex items-center space-x-2 hover:bg-blue-700 p-2 rounded">
                     <ion-icon name="person-circle-outline" class="text-2xl"></ion-icon>
                     <span><?php echo htmlspecialchars($email); ?></span>
                     <ion-icon name="chevron-down-outline" class="text-xl"></ion-icon>
                 </button>
-                <div id="profileDropdown" class="absolute right-0 hidden w-48 mt-2 text-black bg-white rounded-lg shadow-lg animate-slide-in">
-                    <a href="#" id="editProfileBtn" class="flex items-center block px-4 py-2 hover:bg-gray-100"><ion-icon name="create-outline" class="mr-2"></ion-icon> Modifier le profil</a>
-                    <a href="logout.php" class="flex items-center block px-4 py-2 text-red-600 hover:bg-gray-100"><ion-icon name="log-out-outline" class="mr-2"></ion-icon> Déconnexion</a>
+                <div id="profileDropdown" class="absolute right-0 mt-2 w-48 bg-white text-black rounded-lg shadow-lg hidden animate-slide-in">
+                    <a href="#" id="editProfileBtn" class="block px-4 py-2 hover:bg-gray-100 flex items-center"><ion-icon name="create-outline" class="mr-2"></ion-icon> Modifier le profil</a>
+                    <a href="logout.php" class="block px-4 py-2 hover:bg-gray-100 flex items-center text-red-600"><ion-icon name="log-out-outline" class="mr-2"></ion-icon> Déconnexion</a>
                 </div>
             </div>
         </header>
 
         <div class="flex flex-1">
             <!-- Sidebar -->
-            <aside class="w-64 text-white bg-black shadow-md">
-                <nav class="mt-6">
-                    <ul>
-                        <li><a href="#" data-section="dashboard" class="flex items-center px-4 py-2 text-white bg-blue-600 nav-link hover:bg-blue-700 hover:border-l-4 hover:border-red-700"><ion-icon name="home-outline" class="mr-2"></ion-icon> Tableau de bord</a></li>
-                        <li><a href="#" data-section="archive" class="flex items-center px-4 py-2 text-white nav-link hover:bg-blue-700 hover:border-l-4 hover:border-red-700"><ion-icon name="folder-outline" class="mr-2"></ion-icon> Gestion des archives</a></li>
-                        <li><a href="#" data-section="search" class="flex items-center px-4 py-2 text-white nav-link hover:bg-blue-700 hover:border-l-4 hover:border-red-700"><ion-icon name="search-outline" class="mr-2"></ion-icon> Recherche</a></li>
-                        <?php if ($role === 'admin'): ?>
-                            <li><a href="#" data-section="users" class="flex items-center px-4 py-2 text-white nav-link hover:bg-blue-700 hover:border-l-4 hover:border-red-700"><ion-icon name="people-outline" class="mr-2"></ion-icon> Gestion des utilisateurs</a></li>
-                            <li><a href="#" data-section="logs" class="flex items-center px-4 py-2 text-white nav-link hover:bg-blue-700 hover:border-l-4 hover:border-red-700"><ion-icon name="document-text-outline" class="mr-2"></ion-icon> Journal des actions</a></li>
-                        <?php endif; ?>
-                        <li><a href="../dist/logout.php" class="flex items-center px-4 py-2 text-red-500 hover:bg-red-700 hover:text-white hover:border-l-4 hover:border-blue-700"><ion-icon name="log-out-outline" class="mr-2"></ion-icon> Déconnexion</a></li>
-                    </ul>
-                </nav>
-            </aside>
+            <aside class="w-64 bg-black text-white shadow-md">
+    <nav class="mt-6">
+        <ul>
+            <li><a href="#" data-section="dashboard" class="nav-link flex items-center px-4 py-2 text-white bg-blue-600 hover:bg-blue-700"><ion-icon name="home-outline" class="mr-2"></ion-icon> Tableau de bord</a></li>
+            <li><a href="#" data-section="archive" class="nav-link flex items-center px-4 py-2 text-white hover:bg-blue-700"><ion-icon name="folder-outline" class="mr-2"></ion-icon> Gestion des archives</a></li>
+            <li><a href="#" data-section="search" class="nav-link flex items-center px-4 py-2 text-white hover:bg-blue-700"><ion-icon name="search-outline" class="mr-2"></ion-icon> Recherche</a></li>
+            <?php if ($role === 'admin'): ?>
+                <li><a href="#" data-section="users" class="nav-link flex items-center px-4 py-2 text-white hover:bg-blue-700"><ion-icon name="people-outline" class="mr-2"></ion-icon> Gestion des utilisateurs</a></li>
+                <li><a href="#" data-section="logs" class="nav-link flex items-center px-4 py-2 text-white hover:bg-blue-700"><ion-icon name="document-text-outline" class="mr-2"></ion-icon> Journal des actions</a></li>
+            <?php endif; ?>
+            <li><a href="../dist/logout.php" class="flex items-center px-4 py-2 text-red-500 hover:bg-red-700 hover:text-white"><ion-icon name="log-out-outline" class="mr-2"></ion-icon> Déconnexion</a></li>
+        </ul>
+    </nav>
+</aside>
 
             <!-- Main Content -->
             <main id="mainContent" class="flex-1 p-8 overflow-auto">
@@ -100,47 +100,28 @@
         </div>
 
         <!-- Profile Edit Modal -->
-        <div id="profileModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 modal modal-hidden">
-            <div class="w-full max-w-md p-6 bg-white rounded-lg shadow-lg">
-                <h3 class="flex items-center mb-4 text-lg font-medium"><ion-icon name="create-outline" class="mr-2"></ion-icon> Modifier le profil</h3>
+        <div id="profileModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center modal modal-hidden">
+            <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+                <h3 class="text-lg font-medium mb-4 flex items-center"><ion-icon name="create-outline" class="mr-2"></ion-icon> Modifier le profil</h3>
                 <form id="profileForm">
                     <input type="hidden" name="update_profile" value="1">
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700">Email</label>
-                        <input type="email" name="email" value="<?php echo htmlspecialchars($email); ?>" class="w-full p-2 mt-1 border rounded" required>
+                        <input type="email" name="email" value="<?php echo htmlspecialchars($email); ?>" class="mt-1 p-2 w-full border rounded" required>
                     </div>
                     <div class="flex justify-end space-x-2">
-                        <button type="button" id="closeModalBtn" class="px-4 py-2 text-black bg-gray-300 rounded hover:bg-gray-400">Annuler</button>
-                        <button type="submit" class="px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-700">Enregistrer</button>
+                        <button type="button" id="closeModalBtn" class="bg-gray-300 text-black px-4 py-2 rounded hover:bg-gray-400">Annuler</button>
+                        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Enregistrer</button>
                     </div>
                 </form>
             </div>
         </div>
-
-        <!-- Add Category Modal (Admin Only) -->
-        <?php if ($role === 'admin'): ?>
-        <div id="categoryModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 modal modal-hidden">
-            <div class="w-full max-w-md p-6 bg-white rounded-lg shadow-lg">
-                <h3 class="flex items-center mb-4 text-lg font-medium"><ion-icon name="add-circle-outline" class="mr-2"></ion-icon> Ajouter une catégorie</h3>
-                <form id="categoryForm">
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700">Nom de la catégorie</label>
-                        <input type="text" name="new_category" class="w-full p-2 mt-1 border rounded" required>
-                    </div>
-                    <div class="flex justify-end space-x-2">
-                        <button type="button" id="closeCategoryModalBtn" class="px-4 py-2 text-black bg-gray-300 rounded hover:bg-gray-400">Annuler</button>
-                        <button type="submit" class="px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-700">Ajouter</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-        <?php endif; ?>
     </div>
 
     <script>
         // Load content dynamically
         function loadSection(section) {
-            fetch(`../includes/${section}_content.php`)
+            fetch(`../includes/${section}_content.php`) // Chemin corrigé
                 .then(response => response.text())
                 .then(data => {
                     document.getElementById('mainContent').innerHTML = data;
@@ -148,6 +129,9 @@
                         initializeDashboard();
                     } else if (section === 'archive' || section === 'users' || section === 'logs') {
                         initializeDataTable();
+                        if (section === 'archive') {
+                            initializeArchiveJS();
+                        }
                     }
                 })
                 .catch(error => console.error('Erreur chargement section:', error));
@@ -174,21 +158,20 @@
             });
         }
 
-        // Initialize Dashboard
+        // Initialize Dashboard Charts
         function initializeDashboard() {
-            // Initialize activity chart
-            const activityChartCanvas = document.getElementById('activityChart')?.getContext('2d');
-            if (activityChartCanvas) {
-                new Chart(activityChartCanvas, {
+            const ctx = document.getElementById('activityChart')?.getContext('2d');
+            if (ctx) {
+                new Chart(ctx, {
                     type: 'line',
                     data: {
                         labels: JSON.parse(document.getElementById('activityChart').dataset.labels || '[]'),
                         datasets: [{
                             label: 'Documents ajoutés',
                             data: JSON.parse(document.getElementById('activityChart').dataset.data || '[]'),
-                            borderColor: '#1e40af',
+                            borderColor: '#1e40af', // Blue
                             backgroundColor: 'rgba(30, 64, 175, 0.1)',
-                            pointBackgroundColor: '#dc2626',
+                            pointBackgroundColor: '#dc2626', // Red
                             pointBorderColor: '#dc2626',
                             fill: true,
                             tension: 0.4
@@ -197,54 +180,17 @@
                     options: {
                         responsive: true,
                         scales: {
-                            y: { beginAtZero: true, title: { display: true, text: 'Nombre de documents' } },
-                            x: { title: { display: true, text: 'Date' } }
+                            y: { beginAtZero: true, title: { display: true, text: 'Nombre de documents', color: '#000000' }, ticks: { color: '#000000' } },
+                            x: { title: { display: true, text: 'Date', color: '#000000' }, ticks: { color: '#000000' } }
                         },
                         plugins: {
-                            legend: { display: true },
+                            legend: { labels: { color: '#000000' } },
                             tooltip: { mode: 'index', intersect: false }
-                        }
+                        },
+                        interaction: { mode: 'nearest', axis: 'x', intersect: false }
                     }
                 });
             }
-
-            // Initialize category chart
-            const categoryChartCanvas = document.getElementById('categoryChart')?.getContext('2d');
-            if (categoryChartCanvas) {
-                new Chart(categoryChartCanvas, {
-                    type: 'bar',
-                    data: {
-                        labels: JSON.parse(document.getElementById('categoryChart').dataset.categories || '[]'),
-                        datasets: [{
-                            label: 'Nombre de documents',
-                            data: JSON.parse(document.getElementById('categoryChart').dataset.counts || '[]'),
-                            backgroundColor: 'rgba(30, 64, 175, 0.6)',
-                            borderColor: '#1e40af',
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        scales: {
-                            y: { beginAtZero: true, title: { display: true, text: 'Nombre de documents' } },
-                            x: { title: { display: true, text: 'Catégorie' } }
-                        },
-                        plugins: {
-                            legend: { display: true },
-                            tooltip: { mode: 'index', intersect: false }
-                        }
-                    }
-                });
-            }
-
-            // Add event listener for category button (admin only)
-            <?php if ($role === 'admin'): ?>
-            document.getElementById('addCategoryBtn')?.addEventListener('click', () => {
-                document.getElementById('categoryModal').classList.remove('modal-hidden');
-                document.getElementById('categoryModal').classList.add('modal-visible');
-            });
-            <?php endif; ?>
-
             initializeDataTable();
         }
 
@@ -275,43 +221,12 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        window.location.reload();
+                        window.location.reload(); // Reload to update email display
                     } else {
-                        Swal.fire('Erreur', 'Erreur lors de la mise à jour du profil.', 'error');
+                        alert('Erreur lors de la mise à jour du profil');
                     }
                 });
         });
-
-        // Category modal toggle (admin only)
-        <?php if ($role === 'admin'): ?>
-        const categoryModal = document.getElementById('categoryModal');
-        document.getElementById('closeCategoryModalBtn')?.addEventListener('click', () => {
-            categoryModal.classList.remove('modal-visible');
-            categoryModal.classList.add('modal-hidden');
-        });
-
-        // Category form submission
-        document.getElementById('categoryForm')?.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            fetch('../includes/dashboard_content.php', {
-                method: 'POST',
-                body: formData
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        Swal.fire('Succès', data.message, 'success').then(() => {
-                            categoryModal.classList.remove('modal-visible');
-                            categoryModal.classList.add('modal-hidden');
-                            loadSection('dashboard'); // Reload dashboard to update cards and chart
-                        });
-                    } else {
-                        Swal.fire('Erreur', data.message || 'Erreur lors de l\'ajout de la catégorie.', 'error');
-                    }
-                });
-        });
-        <?php endif; ?>
 
         // Navigation
         document.querySelectorAll('.nav-link').forEach(link => {
@@ -323,6 +238,109 @@
 
         // Load dashboard by default
         loadSection('dashboard');
+
+        function initializeArchiveJS() {
+            const isAdmin = <?php echo json_encode($role === 'admin'); ?>;
+            const form = document.getElementById('uploadForm');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const formData = new FormData(this);
+
+                    Swal.fire({
+                        title: 'Chargement...',
+                        text: 'Veuillez patienter pendant le téléchargement.',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    fetch('../includes/archive_content.php', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        Swal.close();
+                        if (data.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Succès',
+                                text: data.message
+                            }).then(() => {
+                                document.getElementById('uploadForm').reset();
+                                // Optionally reload the archive section
+                                loadSection('archive');
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Erreur',
+                                text: data.message
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        Swal.close();
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erreur',
+                            text: 'Une erreur est survenue. Veuillez réessayer.'
+                        });
+                    });
+                });
+
+                // Gestion des formulaires de suppression
+                document.querySelectorAll('[id^="deleteForm_"]').forEach(form => {
+                    form.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        const docId = this.querySelector('input[name="doc_id"]').value;
+
+                        Swal.fire({
+                            title: 'Chargement...',
+                            text: 'Suppression en cours.',
+                            allowOutsideClick: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            }
+                        });
+
+                        fetch('../includes/archive_content.php', {
+                            method: 'POST',
+                            body: new FormData(this)
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            Swal.close();
+                            if (data.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Succès',
+                                    text: data.message
+                                }).then(() => {
+                                    this.closest('tr').remove();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Erreur',
+                                    text: data.message
+                                });
+                            }
+                        })
+                        .catch(error => {
+                            Swal.close();
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Erreur',
+                                text: 'Une erreur est survenue. Veuillez réessayer.'
+                            });
+                        });
+                    });
+                });
+            }
+        }
     </script>
 </body>
 </html>
