@@ -10,16 +10,35 @@ if (!isset($_SESSION['user_id'])) {
 $user_id = $_SESSION['user_id'];
 $role = $_SESSION['role'] ?? 'user';
 $documents = [];
+$categories = [];
 
 try {
-    // Récupérer tous les documents
-    $stmt = $pdo->query("SELECT id, title, category, file_path, created_at FROM documents ORDER BY created_at DESC");
+    // Récupérer toutes les catégories disponibles
+    $stmt = $pdo->query("SELECT category_id, name FROM categories ORDER BY name ASC");
+    $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Récupérer tous les documents avec le nom de la catégorie
+    $stmt = $pdo->query("
+        SELECT d.id, d.title, c.name AS category, d.file_path, d.created_at
+        FROM documents d
+        JOIN categories c ON d.category_id = c.category_id
+        ORDER BY d.created_at DESC
+    ");
     $documents = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['user_id'])) {
+    // Gérer l'ajout d'un document
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload'])) {
         if ($role === 'admin' || $role === 'user') {
-            $title = filter_input(INPUT_POST, 'title', FILTER_DEFAULT);
-            $category = filter_input(INPUT_POST, 'category', FILTER_DEFAULT);
+            $title = filter_input(INPUT_POST, 'title', FILTER_SANITIZE_STRING);
+            $category_id = filter_input(INPUT_POST, 'category_id', FILTER_SANITIZE_NUMBER_INT);
+
+            // Vérifier si la catégorie existe
+            $stmt = $pdo->prepare("SELECT category_id FROM categories WHERE category_id = ?");
+            $stmt->execute([$category_id]);
+            if (!$stmt->fetch()) {
+                echo json_encode(['success' => false, 'message' => 'Catégorie invalide.']);
+                exit();
+            }
 
             // Vérifier si un fichier a été envoyé via $_FILES
             if (empty($_FILES['file']['name'])) {
@@ -47,7 +66,7 @@ try {
                     exit();
                 }
 
-                $file_name = preg_replace('/[^a-zA-Z0-9_\.-]/', '_', basename($file['name']));
+                $file_name = basename($file['name']);
                 $file_path = UPLOAD_DIR . $file_name;
 
                 // Gérer les doublons
@@ -59,8 +78,11 @@ try {
                 }
 
                 if (move_uploaded_file($file['tmp_name'], $file_path)) {
-                    $stmt = $pdo->prepare("INSERT INTO documents (user_id, title, category, file_path, created_at) VALUES (?, ?, ?, ?, NOW())");
-                    $stmt->execute([$user_id, $title, $category, $file_path]);
+                    $stmt = $pdo->prepare("
+                        INSERT INTO documents (user_id, title, category_id, file_path, created_at)
+                        VALUES (?, ?, ?, ?, NOW())
+                    ");
+                    $stmt->execute([$user_id, $title, $category_id, $file_path]);
                     $new_id = $pdo->lastInsertId();
 
                     // Enregistrer un log
@@ -68,7 +90,12 @@ try {
                     $stmt->execute([$user_id, "Document ajouté", "Titre: $title"]);
 
                     // Récupérer le nouveau document pour mise à jour dynamique
-                    $stmt = $pdo->prepare("SELECT id, title, category, file_path, created_at FROM documents WHERE id = ?");
+                    $stmt = $pdo->prepare("
+                        SELECT d.id, d.title, c.name AS category, d.file_path, d.created_at
+                        FROM documents d
+                        JOIN categories c ON d.category_id = c.category_id
+                        WHERE d.id = ?
+                    ");
                     $stmt->execute([$new_id]);
                     $new_document = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -82,8 +109,9 @@ try {
         }
     }
 
+    // Gérer la suppression d'un document (admin uniquement)
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete']) && $role === 'admin') {
-        $doc_id = filter_input(INPUT_POST, 'doc_id', FILTER_DEFAULT);
+        $doc_id = filter_input(INPUT_POST, 'doc_id', FILTER_SANITIZE_NUMBER_INT);
         $stmt = $pdo->prepare("SELECT file_path FROM documents WHERE id = ?");
         $stmt->execute([$doc_id]);
         $doc = $stmt->fetch();
@@ -106,28 +134,35 @@ try {
 }
 ?>
 <div class="animate-slide-in">
-    <h2 class="text-3xl font-semibold text-black mb-6">Gestion des archives</h2>
-    <div class="bg-white p-6 rounded-lg shadow-md mb-8">
-        <h3 class="text-lg font-medium text-black mb-4 flex items-center"><ion-icon name="cloud-upload-outline" class="mr-2"></ion-icon> Ajouter un document</h3>
+    <h2 class="mb-6 text-3xl font-semibold text-white">Gestion des archives</h2>
+    <div class="p-6 mb-8 bg-white rounded-lg shadow-md">
+        <h3 class="flex items-center mb-4 text-lg font-medium text-black"><ion-icon name="cloud-upload-outline" class="mr-2"></ion-icon> Ajouter un document</h3>
         <form id="uploadForm" enctype="multipart/form-data" method="POST">
-            <input type="hidden" name="user_id" value="<?php echo htmlspecialchars($user_id); ?>">
+            <input type="hidden" name="upload" value="1">
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700">Titre</label>
-                <input type="text" name="title" class="mt-1 p-2 w-full border rounded" required>
+                <input type="text" name="title" class="w-full p-2 mt-1 border rounded" required>
             </div>
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700">Catégorie</label>
-                <input type="text" name="category" class="mt-1 p-2 w-full border rounded" required>
+                <select name="category_id" class="w-full p-2 mt-1 border rounded" required>
+                    <option value="" disabled selected>Sélectionner une catégorie</option>
+                    <?php foreach ($categories as $category): ?>
+                        <option value="<?php echo htmlspecialchars($category['category_id']); ?>">
+                            <?php echo htmlspecialchars($category['name']); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
             </div>
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700">Fichier (PDF, JPEG, PNG, max 5MB)</label>
-                <input type="file" name="file" class="mt-1 p-2 w-full border rounded" required>
+                <input type="file" name="file" class="w-full p-2 mt-1 border rounded" required>
             </div>
-            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" >Ajouter</button>
+            <button type="submit" class="px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-700">Ajouter</button>
         </form>
     </div>
-    <div class="bg-white p-6 rounded-lg shadow-md">
-        <h3 class="text-lg font-medium text-black mb-4 flex items-center"><ion-icon name="folder-outline" class="mr-2"></ion-icon> Documents archivés</h3>
+    <div class="p-6 bg-white rounded-lg shadow-md">
+        <h3 class="flex items-center mb-4 text-lg font-medium text-black"><ion-icon name="folder-outline" class="mr-2"></ion-icon> Documents archivés</h3>
         <table id="documentsTable" class="w-full text-left">
             <thead>
                 <tr class="text-black">
@@ -139,17 +174,19 @@ try {
             </thead>
             <tbody>
                 <?php foreach ($documents as $doc): ?>
-                    <tr class="border-t hover:bg-gray-50 transition-colors">
+                    <tr class="transition-colors border-t hover:bg-gray-50">
                         <td class="p-2 text-black"><?php echo htmlspecialchars($doc['title']); ?></td>
                         <td class="p-2 text-red-600"><?php echo htmlspecialchars($doc['category']); ?></td>
                         <td class="p-2 text-black"><?php echo date('d/m/Y', strtotime($doc['created_at'])); ?></td>
                         <td class="p-2">
-                            <a href="<?php echo htmlspecialchars($doc['file_path']); ?>" class="text-blue-600 hover:underline" target="_blank"><ion-icon name="download-outline"></ion-icon></a>
+<a href="/projetAGC/includes/download.php?file=uploads/<?php echo urlencode(basename($doc['file_path'])); ?>" class="text-blue-600 hover:underline" target="_blank">
+    <ion-icon name="download-outline"></ion-icon>
+</a>
                             <?php if ($role === 'admin'): ?>
                                 <form id="deleteForm_<?php echo $doc['id']; ?>" class="inline">
                                     <input type="hidden" name="delete" value="1">
                                     <input type="hidden" name="doc_id" value="<?php echo $doc['id']; ?>">
-                                    <button type="submit" class="text-red-600 hover:underline ml-2"><ion-icon name="trash-outline"></ion-icon></button>
+                                    <button type="submit" class="ml-2 text-red-600 hover:underline"><ion-icon name="trash-outline"></ion-icon></button>
                                 </form>
                             <?php endif; ?>
                         </td>

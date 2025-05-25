@@ -18,9 +18,9 @@ try {
 }
 ?>
 <div class="animate-slide-in">
-    <h2 class="text-3xl font-semibold text-black mb-6">Journal des actions</h2>
-    <div class="bg-white p-6 rounded-lg shadow-md">
-        <h3 class="text-lg font-medium text-black mb-4 flex items-center"><ion-icon name="document-text-outline" class="mr-2"></ion-icon> Logs</h3>
+    <h2 class="mb-6 text-3xl font-semibold text-white">Journal des actions</h2>
+    <div class="p-6 bg-white rounded-lg shadow-md">
+        <h3 class="flex items-center mb-4 text-lg font-medium text-black"><ion-icon name="document-text-outline" class="mr-2"></ion-icon> Logs</h3>
         <table id="logsTable" class="w-full text-left">
             <thead>
                 <tr class="text-black">
@@ -32,7 +32,7 @@ try {
             </thead>
             <tbody>
                 <?php foreach ($logs as $log): ?>
-                    <tr class="border-t hover:bg-gray-50 transition-colors">
+                    <tr class="transition-colors border-t hover:bg-gray-50">
                         <td class="p-2 text-black"><?php echo htmlspecialchars($log['email']); ?></td>
                         <td class="p-2 text-black"><?php echo htmlspecialchars($log['action']); ?></td>
                         <td class="p-2 text-black"><?php echo htmlspecialchars($log['details'] ?? ''); ?></td>
