@@ -13,13 +13,15 @@ header("Content-Security-Policy: default-src 'self'; script-src 'self' https://c
 function logError($pdo, $user_id, $error_code, $message, $details = '') {
     $log_dir = __DIR__ . '/logs/';
     $log_file = $log_dir . 'errors.log';
-    $fallback_log_file = '/tmp/projetAGC_errors.log';
+
+    // Créer le répertoire logs/ s'il n'existe pas
+    if (!file_exists($log_dir)) {
+        mkdir($log_dir, 0777, true);
+    }
 
     $log_message = date('Y-m-d H:i:s') . " [ERROR $error_code] User ID: " . ($user_id ?? 'N/A') . " - $message - Details: $details\n";
 
-    if (!file_exists($log_dir) || !is_writable($log_dir)) {
-        file_put_contents($fallback_log_file, $log_message, FILE_APPEND);
-    } else {
+    if (is_writable($log_dir)) {
         file_put_contents($log_file, $log_message, FILE_APPEND);
     }
 
@@ -27,8 +29,9 @@ function logError($pdo, $user_id, $error_code, $message, $details = '') {
         $stmt = $pdo->prepare("INSERT INTO logs (user_id, action, details, created_at) VALUES (?, ?, ?, NOW())");
         $stmt->execute([$user_id ?? null, "Erreur $error_code", "$message - $details"]);
     } catch (PDOException $e) {
-        $error_log = file_exists($log_dir) && is_writable($log_dir) ? $log_file : $fallback_log_file;
-        file_put_contents($error_log, date('Y-m-d H:i:s') . " [DB LOG ERROR] " . $e->getMessage() . "\n", FILE_APPEND);
+        if (is_writable($log_dir)) {
+            file_put_contents($log_file, date('Y-m-d H:i:s') . " [DB LOG ERROR] " . $e->getMessage() . "\n", FILE_APPEND);
+        }
     }
 }
 
@@ -80,37 +83,50 @@ try {
     }
 
     $file_param = filter_var($_GET['file'], FILTER_SANITIZE_STRING);
-    $filename = basename($file_param); // <-- nom du fichier sans dossier
+    $filename = basename(urldecode($file_param)); // Décoder l'URL pour gérer les caractères spéciaux
 
-    if (empty($filename) || !preg_match('/^[a-zA-Z0-9_\-\.]+$/', $filename)) {
-        logError($pdo, $_SESSION['user_id'], 400, "Requête invalide", "Nom de fichier non valide: $file_param");
-        displayErrorPage(400, "Requête invalide", "Le paramètre de fichier est manquant ou non valide.");
+    // Regex permissive pour autoriser les caractères spéciaux comme é, è, apostrophe, espaces, etc.
+    if (empty($filename) || !preg_match('/^[a-zA-Z0-9_\-\.\s\'éèêëàáâãäåçìíîïòóôõöùúûüýÿ]+$/u', $filename)) {
+        logError($pdo, $_SESSION['user_id'], 400, "Requête invalide", "Nom de fichier non valide: $file_param, Décodé: $filename");
+        displayErrorPage(400, "Requête invalide", "Le paramètre de fichier est manquant ou non valide. Nom: $filename");
     }
 
+    // Construire le chemin complet
     $full_path = UPLOAD_DIR . $filename;
 
-    // Vérification des droits d'accès
-$stmt = $pdo->prepare("SELECT id, user_id FROM documents WHERE file_path = ?");
-$stmt->execute([$filename]);
-$document = $stmt->fetch(PDO::FETCH_ASSOC);
+    // Normaliser le chemin pour résoudre les "../"
+    $full_path = realpath($full_path);
 
-// Document introuvable
-if (!$document) {
-    logError($pdo, $_SESSION['user_id'], 404, "Fichier non trouvé", "Nom: $filename");
-    displayErrorPage(404, "Fichier introuvable", "Ce fichier n’est pas enregistré dans la base de données.");
-}
-
-// Si non admin et non propriétaire, on vérifie les partages
-if ($_SESSION['role'] !== 'admin' && $document['user_id'] != $_SESSION['user_id']) {
-    $stmt = $pdo->prepare("SELECT 1 FROM shared_documents WHERE document_id = ? AND shared_with_user_id = ?");
-    $stmt->execute([$document['id'], $_SESSION['user_id']]);
-    $hasAccess = $stmt->fetchColumn();
-
-    if (!$hasAccess) {
-        logError($pdo, $_SESSION['user_id'], 403, "Accès refusé", "Fichier: $filename");
-        displayErrorPage(403, "Accès interdit", "Vous n'avez pas la permission d'accéder à ce fichier.");
+    // Vérifier si le fichier existe physiquement
+    if (!$full_path || !file_exists($full_path)) {
+        logError($pdo, $_SESSION['user_id'], 404, "Fichier non trouvé sur le serveur", "Chemin: $full_path, File param: $file_param");
+        displayErrorPage(404, "Fichier introuvable", "Le fichier n'existe pas sur le serveur.");
     }
-}
+
+    // Vérification des droits d'accès
+    // Rechercher dans la base avec le nom du fichier ou le chemin relatif
+    $db_file_path = 'C:\xampp\htdocs\ProjetAgc\includes/../uploads/' . $filename; // Adapter selon ce qui est stocké dans file_path
+    $stmt = $pdo->prepare("SELECT id, user_id FROM documents WHERE file_path = ? OR file_path = ?");
+    $stmt->execute([$filename, $db_file_path]);
+    $document = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    // Document introuvable dans la base de données
+    if (!$document) {
+        logError($pdo, $_SESSION['user_id'], 404, "Fichier non trouvé dans la base", "Nom: $filename, Chemin DB attendu: $db_file_path");
+        displayErrorPage(404, "Fichier introuvable", "Ce fichier n’est pas enregistré dans la base de données.");
+    }
+
+    // Si non admin et non propriétaire, on vérifie les partages
+    if ($_SESSION['role'] !== 'admin' && $document['user_id'] != $_SESSION['user_id']) {
+        $stmt = $pdo->prepare("SELECT 1 FROM shared_documents WHERE document_id = ? AND shared_with_user_id = ?");
+        $stmt->execute([$document['id'], $_SESSION['user_id']]);
+        $hasAccess = $stmt->fetchColumn();
+
+        if (!$hasAccess) {
+            logError($pdo, $_SESSION['user_id'], 403, "Accès refusé", "Fichier: $filename");
+            displayErrorPage(403, "Accès interdit", "Vous n'avez pas la permission d'accéder à ce fichier.");
+        }
+    }
 
     // Servir le fichier
     header('Content-Type: ' . mime_content_type($full_path));
